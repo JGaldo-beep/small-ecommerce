@@ -150,11 +150,6 @@ export default function LLMTestButton() {
           </li>
           <li>Both tests will show up in your PostHog dashboard</li>
         </ul>
-
-        <p style={{ marginTop: "15px", color: "#007bff" }}>
-          <strong>💡 Tip:</strong> Since your OpenAI quota is exceeded, use
-          "Test PostHog Only" to verify tracking works!
-        </p>
       </div>
     </div>
   );
