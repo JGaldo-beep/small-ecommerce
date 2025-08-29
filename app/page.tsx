@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { client } from "../sanity/lib/client";
 import {
   productsQuery,
@@ -8,6 +11,7 @@ import HeroBanner from "../components/HeroBanner";
 import Product from "../components/Product";
 import FooterBanner from "../components/FooterBanner";
 import Footer from "../components/Footer";
+import LLMTestButton from "../components/LLMTestButton";
 
 interface ProductType {
   _id: string;
@@ -42,33 +46,62 @@ interface FooterBannerType {
   desc: string;
 }
 
-async function getData() {
-  try {
-    console.log("Fetching data from Sanity...");
+export default function Home() {
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [banner, setBanner] = useState<BannerType | null>(null);
+  const [footerBanner, setFooterBanner] = useState<FooterBannerType | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const [productsData, bannerData, footerBannerData] = await Promise.all([
-      client.fetch(productsQuery),
-      client.fetch(bannerQuery),
-      client.fetch(footerBannerQuery),
-    ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log("🔍 Fetching data from Sanity...");
 
-    return {
-      products: productsData || [],
-      banner: bannerData,
-      footerBanner: footerBannerData,
+        const [productsData, bannerData, footerBannerData] = await Promise.all([
+          client.fetch(productsQuery),
+          client.fetch(bannerQuery),
+          client.fetch(footerBannerQuery),
+        ]);
+
+        console.log("📦 Products data:", productsData);
+        console.log("🎯 Banner data:", bannerData);
+        console.log("🦶 Footer banner data:", footerBannerData);
+
+        setProducts(productsData || []);
+        setBanner(bannerData);
+        setFooterBanner(footerBannerData);
+        setLoading(false);
+      } catch (error) {
+        console.error("❌ Error fetching data:", error);
+        setError(error instanceof Error ? error.message : "Unknown error");
+        setLoading(false);
+      }
     };
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    return {
-      products: [],
-      banner: null,
-      footerBanner: null,
-    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center" }}>
+        <h2>🔄 Loading...</h2>
+        <p>Fetching data from Sanity...</p>
+      </div>
+    );
   }
-}
 
-export default async function Home() {
-  const { products, banner, footerBanner } = await getData();
+  if (error) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center", color: "red" }}>
+        <h2>❌ Error Loading Data</h2>
+        <p>{error}</p>
+        <p>Please check your Sanity configuration and environment variables.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -76,7 +109,6 @@ export default async function Home() {
         <HeroBanner heroBanner={banner} />
       ) : (
         <div
-          className="hero-placeholder"
           style={{
             padding: "2rem",
             textAlign: "center",
@@ -89,28 +121,32 @@ export default async function Home() {
         </div>
       )}
 
-      <div className="products-heading">
-        <h2>Best Selling Products</h2>
-        <p>Speakers of many variations</p>
-      </div>
-
-      <div className="products-container">
-        {products?.length > 0 ? (
-          products.map((product: any) => (
-            <Product key={product._id} product={product} />
-          ))
-        ) : (
-          <div style={{ padding: "2rem", textAlign: "center" }}>
-            <p>No products found. Please check your Sanity configuration.</p>
+      {products && products.length > 0 ? (
+        <>
+          <div className="products-heading">
+            <h2>Best Selling Products</h2>
+            <p>Speakers of many variations</p>
           </div>
-        )}
-      </div>
+
+          <div className="products-container">
+            {products.map((product) => (
+              <Product key={product._id} product={product} />
+            ))}
+          </div>
+        </>
+      ) : (
+        <div style={{ padding: "2rem", textAlign: "center" }}>
+          <p>No products found. Please check your Sanity configuration.</p>
+        </div>
+      )}
+
+      {/* LLM Test Button - Temporary for debugging */}
+      <LLMTestButton />
 
       {footerBanner ? (
         <FooterBanner footerBanner={footerBanner} />
       ) : (
         <div
-          className="footer-placeholder"
           style={{
             padding: "2rem",
             textAlign: "center",
